@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CRNN OCR Engine — Dinraj K Dinesh</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Bootstrap 5 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+  NAVBAR
+════════════════════════════════════════════════════ -->
+<nav class="navbar navbar-expand-lg sticky-top" id="mainNav">
+  <div class="container-xl">
+
+    <!-- Brand -->
+    <a class="navbar-brand d-flex align-items-center gap-2" href="/">
+      <div class="brand-icon">
+        <i class="bi bi-cpu-fill"></i>
+      </div>
+      <div>
+        <span class="brand-title">CRNN<span class="accent">OCR</span></span>
+        <span class="brand-sub">Neural Text Recognition</span>
+      </div>
+    </a>
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
+      <i class="bi bi-list" style="color:var(--accent)"></i>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navMenu">
+      <ul class="navbar-nav ms-auto align-items-center gap-2">
+        <li class="nav-item">
+          <a class="nav-link active" href="#demo">
+            <i class="bi bi-play-circle me-1"></i>Demo
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="#architecture">
+            <i class="bi bi-diagram-3 me-1"></i>Architecture
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/docs" target="_blank">
+            <i class="bi bi-code-slash me-1"></i>API Docs
+          </a>
+        </li>
+        <li class="nav-item ms-2">
+          <a class="btn btn-outline-accent btn-sm" href="https://github.com/dinraj910" target="_blank">
+            <i class="bi bi-github me-1"></i>GitHub
+          </a>
+        </li>
+        <li class="nav-item ms-1">
+          <button class="btn btn-icon" id="themeToggle" title="Toggle theme">
+            <i class="bi bi-sun-fill" id="themeIcon"></i>
+          </button>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</nav>
+
+<!-- ═══════════════════════════════════════════════
+  HERO
+════════════════════════════════════════════════════ -->
+<section class="hero-section" id="demo">
+  <div class="hero-grid-bg"></div>
+  <div class="container-xl">
+    <div class="row align-items-center g-5">
+
+      <!-- Hero copy -->
+      <div class="col-lg-5">
+        <div class="hero-badge mb-3">
+          <span class="badge-dot"></span>
+          <span>Project #11 — AI/ML Roadmap</span>
+        </div>
+        <h1 class="hero-title">
+          Neural<br/>
+          <span class="gradient-text">OCR</span><br/>
+          Engine
+        </h1>
+        <p class="hero-sub">
+          CNN extracts spatial features. BiLSTM reads sequences left–right
+          and right–left. CTC Loss aligns without annotations.
+          <strong>Zero manual labeling.</strong>
+        </p>
+
+        <!-- Tech pills -->
+        <div class="tech-pills d-flex flex-wrap gap-2 my-4">
+          <span class="tech-pill"><i class="bi bi-layers me-1"></i>CRNN</span>
+          <span class="tech-pill"><i class="bi bi-arrow-left-right me-1"></i>BiLSTM</span>
+          <span class="tech-pill"><i class="bi bi-lightning me-1"></i>CTC Loss</span>
+          <span class="tech-pill"><i class="bi bi-search me-1"></i>Beam Search</span>
+          <span class="tech-pill"><i class="bi bi-server me-1"></i>FastAPI</span>
+        </div>
+
+        <!-- Stats row -->
+        <div class="hero-stats d-flex gap-4">
+          <div class="stat-item">
+            <div class="stat-value" id="statRequests">0</div>
+            <div class="stat-label">Requests</div>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <div class="stat-value" id="statChars">0</div>
+            <div class="stat-label">Chars Read</div>
+          </div>
+          <div class="stat-divider"></div>
+          <div class="stat-item">
+            <div class="stat-value" id="statAvgMs">—</div>
+            <div class="stat-label">Avg ms</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upload card -->
+      <div class="col-lg-7">
+        <div class="upload-card" id="uploadCard">
+          <!-- Drop zone -->
+          <div class="drop-zone" id="dropZone">
+            <div class="scan-line" id="scanLine"></div>
+            <div class="drop-content" id="dropContent">
+              <div class="drop-icon-wrap mb-3">
+                <i class="bi bi-image drop-icon"></i>
+                <div class="drop-icon-ring"></div>
+              </div>
+              <p class="drop-title">Drop image here</p>
+              <p class="drop-sub">PNG, JPG, BMP, WebP · max 10 MB</p>
+              <div class="d-flex gap-2 justify-content-center mt-3">
+                <label class="btn btn-accent" for="fileInput">
+                  <i class="bi bi-upload me-2"></i>Choose File
+                </label>
+                <button class="btn btn-outline-accent" id="demoBtn" type="button">
+                  <i class="bi bi-play-fill me-1"></i>Try Demo
+                </button>
+              </div>
+              <input type="file" id="fileInput" accept="image/*" class="d-none" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+  RESULTS PANEL  (hidden until inference runs)
+════════════════════════════════════════════════════ -->
+<section class="results-section" id="resultsSection" style="display:none;">
+  <div class="container-xl">
+
+    <!-- Header row -->
+    <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+      <div>
+        <h2 class="section-title mb-1">
+          <i class="bi bi-check-circle-fill me-2" style="color:var(--accent)"></i>
+          Recognition Result
+        </h2>
+        <p class="section-sub mb-0" id="resultMeta">—</p>
+      </div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-outline-accent btn-sm" id="copyTextBtn">
+          <i class="bi bi-clipboard me-1"></i>Copy Text
+        </button>
+        <button class="btn btn-outline-accent btn-sm" id="downloadBtn">
+          <i class="bi bi-download me-1"></i>Save Result
+        </button>
+        <button class="btn btn-ghost btn-sm" id="resetBtn">
+          <i class="bi bi-arrow-counterclockwise me-1"></i>New Image
+        </button>
+      </div>
+    </div>
+
+    <!-- Image comparison + text output -->
+    <div class="row g-4">
+
+      <!-- Original image -->
+      <div class="col-md-6">
+        <div class="result-card">
+          <div class="result-card-header">
+            <span class="card-label"><i class="bi bi-image me-2"></i>Original</span>
+          </div>
+          <div class="result-img-wrap">
+            <img id="originalImg" src="" alt="Original" class="result-img" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Annotated image -->
+      <div class="col-md-6">
+        <div class="result-card">
+          <div class="result-card-header">
+            <span class="card-label"><i class="bi bi-bounding-box me-2"></i>Annotated</span>
+            <span class="region-badge" id="regionBadge">0 regions</span>
+          </div>
+          <div class="result-img-wrap">
+            <img id="annotatedImg" src="" alt="Annotated" class="result-img" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Detected text output -->
+      <div class="col-12">
+        <div class="result-card text-result-card">
+          <div class="result-card-header">
+            <span class="card-label">
+              <i class="bi bi-fonts me-2"></i>Detected Text
+            </span>
+            <span class="perf-badge" id="perfBadge">
+              <i class="bi bi-clock me-1"></i><span id="inferenceMs">—</span> ms
+            </span>
+          </div>
+          <div class="full-text-box" id="fullTextBox">—</div>
+
+          <!-- Per-region breakdown -->
+          <div class="regions-grid mt-3" id="regionsGrid"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+  LOADING OVERLAY
+════════════════════════════════════════════════════ -->
+<div class="loading-overlay" id="loadingOverlay" style="display:none;">
+  <div class="loading-card">
+    <div class="neural-loader">
+      <div class="node n1"></div>
+      <div class="node n2"></div>
+      <div class="node n3"></div>
+      <div class="node n4"></div>
+      <div class="node n5"></div>
+      <div class="edge e12"></div>
+      <div class="edge e23"></div>
+      <div class="edge e34"></div>
+      <div class="edge e45"></div>
+    </div>
+    <p class="loading-title mt-4">Running Inference</p>
+    <div class="loading-steps">
+      <div class="step-item" id="step1">
+        <i class="bi bi-circle step-icon"></i>
+        <span>CNN feature extraction</span>
+      </div>
+      <div class="step-item" id="step2">
+        <i class="bi bi-circle step-icon"></i>
+        <span>BiLSTM sequence modeling</span>
+      </div>
+      <div class="step-item" id="step3">
+        <i class="bi bi-circle step-icon"></i>
+        <span>CTC beam search decoding</span>
+      </div>
+      <div class="step-item" id="step4">
+        <i class="bi bi-circle step-icon"></i>
+        <span>Annotating regions</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+  ARCHITECTURE SECTION
+════════════════════════════════════════════════════ -->
+<section class="arch-section" id="architecture">
+  <div class="container-xl">
+
+    <div class="text-center mb-5">
+      <div class="section-badge mb-3">Architecture</div>
+      <h2 class="section-title">How It Works</h2>
+      <p class="section-sub">Every component serves a precise purpose</p>
+    </div>
+
+    <!-- Pipeline visual -->
+    <div class="pipeline-wrap">
+      <div class="pipeline-row">
+
+        <div class="pipeline-node input-node">
+          <div class="p-node-icon"><i class="bi bi-image"></i></div>
+          <div class="p-node-label">Input Image</div>
+          <div class="p-node-sub">32 × 128 × 1</div>
+        </div>
+
+        <div class="pipeline-arrow">
+          <div class="arrow-line"></div>
+          <i class="bi bi-chevron-right arrow-head"></i>
+        </div>
+
+        <div class="pipeline-node cnn-node">
+          <div class="p-node-icon"><i class="bi bi-grid-3x3"></i></div>
+          <div class="p-node-label">CNN Encoder</div>
+          <div class="p-node-sub">6 blocks · 64→512 filters</div>
+          <div class="p-node-detail">Asymmetric pooling<br/>preserves width</div>
+        </div>
+
+        <div class="pipeline-arrow">
+          <div class="arrow-line"></div>
+          <i class="bi bi-chevron-right arrow-head"></i>
+        </div>
+
+        <div class="pipeline-node reshape-node">
+          <div class="p-node-icon"><i class="bi bi-arrows-expand"></i></div>
+          <div class="p-node-label">Reshape</div>
+          <div class="p-node-sub">32 steps × 512 feat.</div>
+          <div class="p-node-detail">Spatial → Temporal<br/>the key bridge</div>
+        </div>
+
+        <div class="pipeline-arrow">
+          <div class="arrow-line"></div>
+          <i class="bi bi-chevron-right arrow-head"></i>
+        </div>
+
+        <div class="pipeline-node lstm-node">
+          <div class="p-node-icon"><i class="bi bi-arrow-left-right"></i></div>
+          <div class="p-node-label">BiLSTM × 2</div>
+          <div class="p-node-sub">256 units · both dirs</div>
+          <div class="p-node-detail">Full left+right<br/>context per char</div>
+        </div>
+
+        <div class="pipeline-arrow">
+          <div class="arrow-line"></div>
+          <i class="bi bi-chevron-right arrow-head"></i>
+        </div>
+
+        <div class="pipeline-node ctc-node">
+          <div class="p-node-icon"><i class="bi bi-lightning-fill"></i></div>
+          <div class="p-node-label">CTC Decode</div>
+          <div class="p-node-sub">Beam width = 10</div>
+          <div class="p-node-detail">No alignment<br/>annotation needed</div>
+        </div>
+
+        <div class="pipeline-arrow">
+          <div class="arrow-line"></div>
+          <i class="bi bi-chevron-right arrow-head"></i>
+        </div>
+
+        <div class="pipeline-node output-node">
+          <div class="p-node-icon"><i class="bi bi-fonts"></i></div>
+          <div class="p-node-label">Text Output</div>
+          <div class="p-node-sub">a–z, 0–9</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Key insight cards -->
+    <div class="row g-4 mt-4">
+      <div class="col-md-4">
+        <div class="insight-card">
+          <div class="insight-num">01</div>
+          <h5 class="insight-title">Asymmetric Pooling</h5>
+          <p class="insight-body">
+            Standard (2,2) pooling halves both dimensions. We use (2,1)
+            in later blocks to preserve the width dimension — each column
+            becomes exactly one LSTM timestep.
+          </p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="insight-card">
+          <div class="insight-num">02</div>
+          <h5 class="insight-title">CTC Alignment-Free Training</h5>
+          <p class="insight-body">
+            CTC introduces a blank token and sums over all valid
+            character-to-timestep alignments. No pixel-level labeling
+            of where each character starts and ends.
+          </p>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="insight-card">
+          <div class="insight-num">03</div>
+          <h5 class="insight-title">Bidirectional Context</h5>
+          <p class="insight-body">
+            Forward LSTM reads left→right (prefix context). Backward
+            reads right→left (suffix context). Together they resolve
+            ambiguous characters like "rn" vs "m".
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+  API SECTION
+════════════════════════════════════════════════════ -->
+<section class="api-section" id="api">
+  <div class="container-xl">
+    <div class="row align-items-center g-5">
+
+      <div class="col-lg-5">
+        <div class="section-badge mb-3">REST API</div>
+        <h2 class="section-title">Integrate in Minutes</h2>
+        <p class="section-sub">
+          Every endpoint is documented via FastAPI's auto-generated
+          OpenAPI spec. Hit <code>/docs</code> for the interactive playground.
+        </p>
+        <a href="/docs" target="_blank" class="btn btn-accent mt-3">
+          <i class="bi bi-box-arrow-up-right me-2"></i>Open API Docs
+        </a>
+      </div>
+
+      <div class="col-lg-7">
+        <!-- Code tabs -->
+        <div class="code-card">
+          <div class="code-header">
+            <div class="code-dots">
+              <span></span><span></span><span></span>
+            </div>
+            <div class="code-tabs">
+              <button class="code-tab active" data-target="curlCode">cURL</button>
+              <button class="code-tab" data-target="pythonCode">Python</button>
+              <button class="code-tab" data-target="jsCode">JavaScript</button>
+            </div>
+            <button class="code-copy" id="codeCopyBtn" title="Copy code">
+              <i class="bi bi-clipboard"></i>
+            </button>
+          </div>
+
+          <div class="code-body">
+            <pre id="curlCode" class="code-pre active"><code><span class="c"># POST /api/ocr — multipart file upload</span>
+<span class="k">curl</span> -X POST http://localhost:8000/api/ocr \
+     -F <span class="s">"file=@word.png"</span>
+
+<span class="c"># Response</span>
+{
+  <span class="k">"full_text"</span>:     <span class="s">"hello"</span>,
+  <span class="k">"region_count"</span>:  <span class="n">1</span>,
+  <span class="k">"inference_ms"</span>:  <span class="n">48.2</span>,
+  <span class="k">"regions"</span>: [{
+    <span class="k">"text"</span>:       <span class="s">"hello"</span>,
+    <span class="k">"bbox"</span>:       [<span class="n">0,0,128,32</span>],
+    <span class="k">"confidence"</span>: <span class="n">0.94</span>
+  }]
+}</code></pre>
+
+            <pre id="pythonCode" class="code-pre"><code><span class="k">import</span> requests
+
+url  = <span class="s">"http://localhost:8000/api/ocr"</span>
+resp = requests.post(
+    url,
+    files={<span class="s">"file"</span>: open(<span class="s">"word.png"</span>, <span class="s">"rb"</span>)}
+)
+data = resp.json()
+
+<span class="k">print</span>(data[<span class="s">"full_text"</span>])          <span class="c"># "hello"</span>
+<span class="k">print</span>(data[<span class="s">"inference_ms"</span>])       <span class="c"># 48.2</span>
+<span class="k">for</span> r <span class="k">in</span> data[<span class="s">"regions"</span>]:
+    <span class="k">print</span>(r[<span class="s">"text"</span>], r[<span class="s">"confidence"</span>])</code></pre>
+
+            <pre id="jsCode" class="code-pre"><code><span class="k">const</span> form = <span class="k">new</span> FormData();
+form.append(<span class="s">"file"</span>, fileInput.files[<span class="n">0</span>]);
+
+<span class="k">const</span> res = <span class="k">await</span> fetch(
+  <span class="s">"/api/ocr"</span>,
+  { method: <span class="s">"POST"</span>, body: form }
+);
+<span class="k">const</span> data = <span class="k">await</span> res.json();
+
+console.log(data.full_text);       <span class="c">// "hello"</span>
+console.log(data.inference_ms);    <span class="c">// 48.2</span></code></pre>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════
+  FOOTER
+════════════════════════════════════════════════════ -->
+<footer class="site-footer">
+  <div class="container-xl">
+    <div class="row align-items-center">
+      <div class="col-md-6">
+        <div class="d-flex align-items-center gap-3">
+          <div class="brand-icon sm">
+            <i class="bi bi-cpu-fill"></i>
+          </div>
+          <div>
+            <div class="footer-name">Dinraj K Dinesh</div>
+            <div class="footer-sub">MCA → AI/ML Engineer · 12-Month Roadmap</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 text-md-end mt-3 mt-md-0">
+        <div class="footer-links d-flex gap-3 justify-content-md-end">
+          <a href="https://dinrajkdinesh.vercel.app" target="_blank">
+            <i class="bi bi-globe2 me-1"></i>Portfolio
+          </a>
+          <a href="https://github.com/dinraj910" target="_blank">
+            <i class="bi bi-github me-1"></i>GitHub
+          </a>
+          <a href="/docs" target="_blank">
+            <i class="bi bi-file-code me-1"></i>API
+          </a>
+        </div>
+        <div class="footer-stack mt-2">
+          Built with TensorFlow · FastAPI · OpenCV · Bootstrap 5
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- Toast notification -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- Bootstrap 5 JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- App JS -->
+<script src="/static/js/app.js"></script>
+</body>
+</html>
