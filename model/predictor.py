@@ -1,6 +1,6 @@
 """
 CRNN OCR Predictor — Inference Engine
-Compatible with TensorFlow 2.16+ (standalone Keras 3)
+Compatible with TensorFlow 2.20 + Keras 3.13
 """
 
 import cv2
@@ -31,7 +31,6 @@ class CRNNPredictor:
         self._load()
 
     def _load(self):
-        # ── KEY FIX: import keras directly, not via tf.keras ──────
         import keras
 
         with open(self.vocab_path, "r") as f:
@@ -42,14 +41,23 @@ class CRNNPredictor:
         }
         self._num_timesteps = self._vocab.get("num_timesteps", 32)
 
-        if not Path(self.model_path).exists():
+        model_path = Path(self.model_path)
+        h5_path    = model_path.with_suffix(".h5")
+
+        # Prefer .keras; fall back to .h5 if not present
+        if model_path.exists():
+            load_path = str(model_path)
+        elif h5_path.exists():
+            load_path = str(h5_path)
+            print(f"⚠️  Using .h5 fallback: {h5_path.name}")
+        else:
             raise FileNotFoundError(f"Model not found: {self.model_path}")
 
-        self._model = keras.models.load_model(
-            self.model_path, compile=False
-        )
-        # Store keras ref for CTC decode later
-        self._keras = keras
+        self._model = keras.models.load_model(load_path, compile=False)
+        print(f"✅ Model loaded: {Path(load_path).name}")
+        self._keras    = keras
+        # Blank token is always the last class (CTC convention)
+        self._blank_idx = self._vocab.get("num_classes", 37) - 1
 
     def _preprocess_crop(self, img_bgr: np.ndarray) -> np.ndarray:
         gray  = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2GRAY)
@@ -67,25 +75,31 @@ class CRNNPredictor:
         return np.expand_dims(norm, axis=-1)
 
     def _decode(self, y_pred: np.ndarray, beam_width: int = 10) -> List[str]:
-        import numpy as np
-
+        # keras.ops.ctc_decode: returns (top_paths, batch, T)
+        # -1 = padding, blank_idx = CTC blank — both must be excluded
         batch_size = y_pred.shape[0]
-        input_lens = np.full(batch_size, self._num_timesteps)
+        seq_lens   = np.full(batch_size, self._num_timesteps, dtype=np.int32)
 
-        # ── KEY FIX: use keras.src backend CTC decode ─────────────
-        # keras.backend.ctc_decode still works in Keras 3
-        decoded, _ = self._keras.backend.ctc_decode(
+        decoded, _ = self._keras.ops.ctc_decode(
             y_pred,
-            input_length=input_lens,
-            greedy=False,
+            sequence_lengths=seq_lens,
+            strategy="beam_search",
             beam_width=beam_width,
         )
-
+        # decoded: (top_paths, batch, T) — take top-1 path
         results = []
-        for seq in decoded[0].numpy():
+        for b in range(batch_size):
+            seq = decoded[0][b]
+            try:
+                seq = seq.numpy()
+            except AttributeError:
+                pass
             text = "".join(
-                [self._idx_to_char.get(int(i), "") for i in seq if i > 0]
-            )
+                self._idx_to_char.get(int(i), "")
+                for i in seq
+                # -1 = ctc_decode padding; blank_idx = CTC blank token
+                if int(i) >= 0 and int(i) != self._blank_idx
+            ).upper()   # model trained on lowercase — uppercase for display
             results.append(text)
         return results
 

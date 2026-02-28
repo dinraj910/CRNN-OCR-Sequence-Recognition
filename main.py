@@ -4,6 +4,8 @@ Author : Dinraj K Dinesh
 Project: #11 — CNN + BiLSTM + CTC Loss OCR System
 """
 
+import os
+
 from fastapi import FastAPI, File, UploadFile, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -12,7 +14,6 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import uuid
 import time
-import os
 import io
 import base64
 import json
