@@ -188,7 +188,7 @@ Output:    Decoded text string (uppercased for display)
 </tr>
 </table>
 
-### 🔍 OCR Results & Annotation
+### 🔍 API Service Details
 
 <table>
 <tr>
@@ -222,7 +222,7 @@ Output:    Decoded text string (uppercased for display)
 </tr>
 </table>
 
-### 🐳 Docker & Mobile Responsive
+### 🐳 Multi-Region Detection
 
 <table>
 <tr>
@@ -239,6 +239,24 @@ Output:    Decoded text string (uppercased for display)
 
 </div>
 
+## 📓 Output from notebook
+
+## Tarning Curves
+
+![alt text](notebook/training_curves.png)
+
+## Sample output
+
+![alt text](<output/ocr_result (3).png>)
+
+
+![alt text](<output/ocr_result (4).png>)
+
+![alt text](<output/ocr_result (5).png>)
+
+## Qualitative Analysis
+
+![alt text](output/qualitative_results.png)
 ---
 
 ## 🗂️ Project Structure
