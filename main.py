@@ -200,8 +200,10 @@ async def _run_inference(img_bytes: bytes, filename: str) -> dict:
     request_id = str(uuid.uuid4())[:8]
 
     try:
+        # ✅ NEW — replace with:
         import numpy as np
         import cv2
+        import keras  
 
         # Decode image
         nparr   = np.frombuffer(img_bytes, np.uint8)
